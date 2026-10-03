@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { getNextId } from '../physics/SimulationEngine';
 import { audioEngine } from '../audio/AudioEngine';
 
@@ -8,7 +8,7 @@ const NOTE_COLORS = [
   '#4ade80', '#2dd4bf', '#22d3ee'
 ];
 
-export function CanvasView({ engineRef, activeTool, onSelectTool }) {
+export function CanvasView({ engineRef, activeTool }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const [stats, setStats] = useState({ balls: 0, fps: 60 });

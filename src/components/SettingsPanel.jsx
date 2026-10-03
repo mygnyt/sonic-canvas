@@ -6,9 +6,7 @@ import {
   Eye,
   Download,
   Upload,
-  Sparkles,
   Zap,
-  RotateCcw
 } from 'lucide-react';
 import { SCALES, ROOT_NOTES, SYNTH_TYPES } from '../audio/AudioEngine';
 

@@ -6,13 +6,11 @@ import {
   Trash2,
   Volume2,
   VolumeX,
-  Radio,
   Sliders,
   HelpCircle,
   Maximize2,
   Minimize2,
   Sparkles,
-  Download,
   Square,
   Music4
 } from 'lucide-react';
@@ -36,21 +34,17 @@ export function Header({
   onToggleSettings,
   isSettingsOpen,
   onOpenHelp,
-  onExportScene,
-  onImportScene,
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [recordTimer, setRecordTimer] = useState(0);
 
   useEffect(() => {
-    let interval = null;
-    if (isRecording) {
+    if (!isRecording) return;
+    const interval = setInterval(() => setRecordTimer((t) => t + 1), 1000);
+    return () => {
+      clearInterval(interval);
       setRecordTimer(0);
-      interval = setInterval(() => setRecordTimer((t) => t + 1), 1000);
-    } else {
-      setRecordTimer(0);
-    }
-    return () => clearInterval(interval);
+    };
   }, [isRecording]);
 
   const toggleFullscreen = () => {

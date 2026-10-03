@@ -12,7 +12,7 @@ export function App() {
   const engineRef = useRef(null);
   const [activeTool, setActiveTool] = useState('emitter');
   const [isPlaying, setIsPlaying] = useState(true);
-  const [bpm, setBpm] = useState(110);
+  const [bpm, setBpm] = useState(90);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -20,42 +20,24 @@ export function App() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [radarEnabled, setRadarEnabled] = useState(false);
 
-  // Audio parameters
+  // Audio parameters matching Zen Garden preset
   const [synthType, setSynthType] = useState('bell');
   const [scale, setScale] = useState('hirajoshi');
-  const [rootNote, setRootNote] = useState('C');
-  const [reverbWet, setReverbWet] = useState(0.4);
+  const [rootNote, setRootNote] = useState('D');
+  const [reverbWet, setReverbWet] = useState(0.5);
   const [delayWet, setDelayWet] = useState(0.35);
   const [delayTime, setDelayTime] = useState(0.28);
   const [filterCutoff, setFilterCutoff] = useState(12000);
 
   // Physics parameters
-  const [gravityY, setGravityY] = useState(0.18);
+  const [gravityY, setGravityY] = useState(0.16);
   const [gravityX, setGravityX] = useState(0);
-  const [elasticity, setElasticity] = useState(0.88);
+  const [elasticity, setElasticity] = useState(0.85);
 
   // Visuals parameters
   const [showTrails, setShowTrails] = useState(true);
   const [showGlow, setShowGlow] = useState(true);
   const [showVisualizer, setShowVisualizer] = useState(true);
-
-  // Initialize Canvas and Engine
-  useEffect(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return;
-
-    const engine = new SimulationEngine(canvas);
-    engineRef.current = engine;
-    engine.start();
-
-    // Load initial preset (Zen Rain Garden)
-    const initialPreset = PRESETS[0];
-    applyPreset(initialPreset, engine);
-
-    return () => {
-      engine.stop();
-    };
-  }, []);
 
   // Preset Applicator
   const applyPreset = useCallback((preset, engInstance = null) => {
@@ -91,6 +73,74 @@ export function App() {
     setGravityX(engine.gravity.x);
     setElasticity(engine.elasticity);
     setRadarEnabled(!!engine.radar?.enabled);
+  }, []);
+
+  // Controls Handlers
+  const togglePlay = useCallback(() => {
+    if (!engineRef.current) return;
+    setIsPlaying((prev) => {
+      const next = !prev;
+      engineRef.current.isPlaying = next;
+      return next;
+    });
+  }, []);
+
+  const resetBalls = useCallback(() => {
+    engineRef.current?.clearBalls();
+  }, []);
+
+  const clearAll = useCallback(() => {
+    engineRef.current?.clearAll();
+    setRadarEnabled(false);
+  }, []);
+
+  const changeBpm = useCallback((val) => {
+    setBpm(val);
+    if (engineRef.current) engineRef.current.bpm = val;
+  }, []);
+
+  const changeVolume = useCallback((val) => {
+    setVolume(val);
+    audioEngine.setVolume(val);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const muted = audioEngine.toggleMute();
+    setIsMuted(muted);
+  }, []);
+
+  const toggleRadar = useCallback(() => {
+    if (!engineRef.current) return;
+    setRadarEnabled((prev) => {
+      const next = !prev;
+      engineRef.current.radar.enabled = next;
+      return next;
+    });
+  }, []);
+
+  // Initialize Canvas and Engine
+  useEffect(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+
+    const engine = new SimulationEngine(canvas);
+    engineRef.current = engine;
+    engine.start();
+
+    // Initial preset setup
+    const initialPreset = PRESETS[0];
+    audioEngine.setScale(initialPreset.scale);
+    audioEngine.setRootNote(initialPreset.rootNote);
+    audioEngine.setSynthType(initialPreset.synthType);
+    audioEngine.setReverbWet(initialPreset.reverb);
+    audioEngine.setDelayWet(initialPreset.delay);
+
+    const sceneData = initialPreset.setup(engine.width || 1200, engine.height || 700);
+    engine.loadScene(sceneData);
+
+    return () => {
+      engine.stop();
+    };
   }, []);
 
   // Global Keyboard Shortcuts
@@ -131,46 +181,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, isMuted, radarEnabled]);
-
-  // Controls Handlers
-  const togglePlay = () => {
-    if (!engineRef.current) return;
-    const next = !isPlaying;
-    setIsPlaying(next);
-    engineRef.current.isPlaying = next;
-  };
-
-  const resetBalls = () => {
-    engineRef.current?.clearBalls();
-  };
-
-  const clearAll = () => {
-    engineRef.current?.clearAll();
-    setRadarEnabled(false);
-  };
-
-  const changeBpm = (val) => {
-    setBpm(val);
-    if (engineRef.current) engineRef.current.bpm = val;
-  };
-
-  const changeVolume = (val) => {
-    setVolume(val);
-    audioEngine.setVolume(val);
-  };
-
-  const toggleMute = () => {
-    const muted = audioEngine.toggleMute();
-    setIsMuted(muted);
-  };
-
-  const toggleRadar = () => {
-    if (!engineRef.current) return;
-    const next = !radarEnabled;
-    setRadarEnabled(next);
-    engineRef.current.radar.enabled = next;
-  };
+  }, [togglePlay, resetBalls, clearAll, toggleMute, toggleRadar]);
 
   // Audio Recording
   const startRecording = () => {
@@ -274,7 +285,6 @@ export function App() {
       <CanvasView
         engineRef={engineRef}
         activeTool={activeTool}
-        onSelectTool={setActiveTool}
       />
 
       {/* Settings Panel */}
