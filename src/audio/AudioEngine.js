@@ -209,6 +209,13 @@ class AudioEngine {
     }
   }
 
+  setDelayWet(val) {
+    this.settings.delayWet = Math.max(0, Math.min(1.0, val));
+    if (this.delayGain && this.ctx) {
+      this.delayGain.gain.setTargetAtTime(this.settings.delayWet, this.ctx.currentTime, 0.05);
+    }
+  }
+
   setDelayTime(val) {
     this.settings.delayTime = Math.max(0.05, Math.min(1.0, val));
     if (this.delayNode && this.ctx) {
